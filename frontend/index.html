@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>API Monitor | Cottage Home Care Operations</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Lora:wght@600;700&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<div class="app">
+
+  <!-- ========== Sidebar ========== -->
+  <aside class="sidebar" id="sidebar">
+    <a class="logo" href="#overview" aria-label="Cottage Home Care API Monitor">
+      <img src="https://images.cottagehome.care/JeRtSremNqgkxL9F76cqM" alt="Cottage Home Care" id="logo" />
+      <span class="logo-text" id="logoText" hidden>Cottage <small>Home Care</small></span>
+    </a>
+    <p class="side-title">API Monitor</p>
+    <nav class="side-nav" aria-label="Sections">
+      <a href="#overview" data-view="overview"><i class="ico">&#9638;</i> Overview</a>
+      <a href="#alerts" data-view="alerts"><i class="ico">&#9888;</i> Alerts <span class="count" id="navCount">0</span></a>
+      <a href="#check" data-view="check"><i class="ico">&#9654;</i> Run Check</a>
+    </nav>
+    <div class="side-foot">
+      <div class="conn"><span class="dot" id="connDot"></span><span id="connText">Connecting...</span></div>
+      <p>Internal tool<br />Backend operations</p>
+    </div>
+  </aside>
+  <div class="scrim" id="scrim"></div>
+
+  <!-- ========== Main ========== -->
+  <div class="main">
+    <header class="topbar">
+      <button class="icon-btn menu" id="menuBtn" aria-label="Open menu">&#9776;</button>
+      <h1 id="pageTitle">Overview</h1>
+      <div class="top-actions">
+        <span class="updated" id="updated"></span>
+        <label class="switch" title="Refresh every 15 seconds">
+          <input type="checkbox" id="auto" checked /> <span>Auto-refresh</span>
+        </label>
+        <button class="btn btn-outline" id="refresh">Refresh</button>
+      </div>
+    </header>
+
+    <main class="content" id="content">
+
+      <!-- ===== Overview ===== -->
+      <section class="view" id="view-overview">
+        <div class="kpis" id="kpis"></div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <h2>APIs needing attention</h2>
+            <span class="muted" id="apiSub"></span>
+          </div>
+          <div class="api-grid" id="apiGrid"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Latest alerts</h2>
+            <a class="link" href="#alerts">View all alerts</a>
+          </div>
+          <div class="table-wrap"><table class="tbl" id="latestTable"></table></div>
+        </div>
+      </section>
+
+      <!-- ===== Alerts ===== -->
+      <section class="view" id="view-alerts" hidden>
+        <div class="filters">
+          <input type="search" id="q" placeholder="Search API or message" aria-label="Search alerts" />
+          <select id="fSeverity" aria-label="Severity">
+            <option value="">All severities</option>
+            <option value="critical">Critical</option>
+            <option value="warning">Warning</option>
+          </select>
+          <select id="fStatus" aria-label="Status">
+            <option value="active">Active</option>
+            <option value="resolved">Resolved</option>
+            <option value="all">All statuses</option>
+          </select>
+          <select id="fApi" aria-label="API"><option value="">All APIs</option></select>
+          <button class="btn btn-outline" id="export">Export CSV</button>
+        </div>
+        <div class="panel flush">
+          <div class="table-wrap"><table class="tbl" id="alertsTable"></table></div>
+          <p class="table-foot" id="tableFoot"></p>
+        </div>
+      </section>
+
+      <!-- ===== Run check ===== -->
+      <section class="view" id="view-check" hidden>
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Run a manual check</h2>
+          </div>
+          <p class="muted lead">Paste a JSON list of API results (or load a file) and submit it to <code>POST /monitor</code>. Problems found are stored and shown under Alerts.</p>
+          <label class="field-label" for="payload">API results</label>
+          <textarea id="payload" rows="14" spellcheck="false"></textarea>
+          <div class="row">
+            <button class="btn btn-primary" id="send">Run Check</button>
+            <button class="btn btn-outline" id="reset" type="button">Reset Example</button>
+            <label class="btn btn-outline file">Load JSON file<input type="file" id="file" accept=".json,application/json" hidden /></label>
+          </div>
+          <div id="result" class="result" role="status" hidden></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h2>Detection rules</h2></div>
+          <ul class="rules">
+            <li><span class="tag">Slow response</span> Response time above 2000 ms (critical above 4000 ms)</li>
+            <li><span class="tag">Failed request</span> HTTP status 400 or higher (critical for 500+)</li>
+            <li><span class="tag">No records</span> Fewer than 1 record returned</li>
+          </ul>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ========== Detail drawer ========== -->
+  <aside class="drawer" id="drawer" aria-hidden="true" aria-labelledby="drawerTitle">
+    <div class="drawer-head">
+      <h2 id="drawerTitle">Alert details</h2>
+      <button class="icon-btn" id="drawerClose" aria-label="Close details">&times;</button>
+    </div>
+    <div class="drawer-body" id="drawerBody"></div>
+  </aside>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="js/api.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

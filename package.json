@@ -1,5 +1,10 @@
 {
-  "dependencies": {
-    "express": "^5.3.0"
+  "name": "api-monitor-root",
+  "private": true,
+  "scripts": {
+    "install:all": "npm --prefix backend install",
+    "start": "npm --prefix backend start",
+    "dev": "npm --prefix backend run dev",
+    "sample": "npm --prefix backend run sample"
   }
 }

@@ -1,0 +1,19 @@
+{
+  "name": "api-monitor",
+  "version": "1.0.0",
+  "description": "Intelligent API Monitoring & Alert System (Node.js + PostgreSQL + LLM)",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "sample": "node scripts/sendSample.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "nodemailer": "^10.2.1",
+    "pg": "^8.12.0",
+    "winston": "^3.13.1"
+  }
+}
