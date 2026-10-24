@@ -3,7 +3,7 @@
 function isValid(i) {
   return (
     i && typeof i === 'object' &&
-    typeof i.api_name === 'string' && i.api_name.trim() !== '' &&
+    typeof i.api_name === 'string' && i.api_name.trim() !== '' && i.api_name.length <= 100 &&
     Number.isFinite(i.response_time_ms) &&
     Number.isInteger(i.status_code) &&
     Number.isFinite(i.records_returned)

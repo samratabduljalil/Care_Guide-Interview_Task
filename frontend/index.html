@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Lora:wght@600;700&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/theme.css" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -19,15 +20,22 @@
       <img src="https://images.cottagehome.care/JeRtSremNqgkxL9F76cqM" alt="Cottage Home Care" id="logo" />
       <span class="logo-text" id="logoText" hidden>Cottage <small>Home Care</small></span>
     </a>
+    <p class="tagline">Care That Feels Like Family</p>
     <p class="side-title">API Monitor</p>
     <nav class="side-nav" aria-label="Sections">
       <a href="#overview" data-view="overview"><i class="ico">&#9638;</i> Overview</a>
       <a href="#alerts" data-view="alerts"><i class="ico">&#9888;</i> Alerts <span class="count" id="navCount">0</span></a>
       <a href="#check" data-view="check"><i class="ico">&#9654;</i> Run Check</a>
+      <a href="#settings" data-view="settings"><i class="ico">&#9881;</i> Settings</a>
     </nav>
     <div class="side-foot">
       <div class="conn"><span class="dot" id="connDot"></span><span id="connText">Connecting...</span></div>
-      <p>Internal tool<br />Backend operations</p>
+      <p>Internal tool for the backend team</p>
+      <address class="side-contact">
+        <a href="tel:+15163672266">516-367-2266</a>
+        <a href="mailto:info@cottagehomecare.com">info@cottagehomecare.com</a>
+        <span>294 West Merrick Road, Suite 12<br />Freeport, NY 11520</span>
+      </address>
     </div>
   </aside>
   <div class="scrim" id="scrim"></div>
@@ -50,7 +58,46 @@
 
       <!-- ===== Overview ===== -->
       <section class="view" id="view-overview">
+        <div class="ov-head">
+          <div>
+            <h2 class="ov-title">System health</h2>
+            <p class="muted" id="ovSub">Monitoring patient and operational APIs</p>
+          </div>
+          <div class="seg" role="group" aria-label="Time range">
+            <button class="seg-btn on" data-range="24h">Last 24 hours</button>
+            <button class="seg-btn" data-range="7d">Last 7 days</button>
+          </div>
+        </div>
+
         <div class="kpis" id="kpis"></div>
+
+        <div class="grid g-main">
+          <div class="panel">
+            <div class="panel-head">
+              <h2>Alerts over time</h2>
+              <div class="legend"><span><i style="background:var(--crit)"></i>Critical</span><span><i style="background:var(--accent)"></i>Warning</span></div>
+            </div>
+            <div class="chart" id="chartTimeline"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h2>Active by severity</h2></div>
+            <div class="donut-wrap">
+              <div class="chart donut" id="chartDonut"></div>
+              <ul class="legend-list" id="donutLegend"></ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid g-half">
+          <div class="panel">
+            <div class="panel-head"><h2>Issue types</h2><span class="muted" id="rangeLabel1"></span></div>
+            <div id="chartIssues"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h2>Most affected APIs</h2><span class="muted" id="rangeLabel2"></span></div>
+            <div id="chartApis"></div>
+          </div>
+        </div>
 
         <div class="panel">
           <div class="panel-head">
@@ -60,8 +107,8 @@
           <div class="api-grid" id="apiGrid"></div>
         </div>
 
-        <div class="panel">
-          <div class="panel-head">
+        <div class="panel flush">
+          <div class="panel-head pad">
             <h2>Latest alerts</h2>
             <a class="link" href="#alerts">View all alerts</a>
           </div>
@@ -92,6 +139,94 @@
         </div>
       </section>
 
+      <!-- ===== Settings ===== -->
+      <section class="view" id="view-settings" hidden>
+        <div id="settingsErrors" class="result error" hidden></div>
+
+        <div class="grid g-half">
+          <!-- Thresholds -->
+          <div class="panel">
+            <div class="panel-head"><h2>Detection thresholds</h2></div>
+            <p class="muted lead">When an API result counts as a problem. Applies to new checks from now on; existing alerts are not changed.</p>
+            <div class="form-grid">
+              <label class="field"><span>Slow response: warning above (ms)</span>
+                <input type="number" min="50" step="50" data-path="thresholds.latencyWarningMs" /></label>
+              <label class="field"><span>Slow response: critical above (ms)</span>
+                <input type="number" min="50" step="50" data-path="thresholds.latencyCriticalMs" /></label>
+              <label class="field"><span>Failed request: HTTP status from</span>
+                <input type="number" min="100" max="599" data-path="thresholds.errorStatusFrom" /><small>400 = all client and server errors</small></label>
+              <label class="field"><span>Critical: HTTP status from</span>
+                <input type="number" min="100" max="599" data-path="thresholds.criticalStatusFrom" /><small>500 = server errors are critical</small></label>
+              <label class="field"><span>No records: fewer than</span>
+                <input type="number" min="0" data-path="thresholds.minRecords" /><small>Set 0 to turn this check off</small></label>
+            </div>
+            <label class="check"><input type="checkbox" data-path="thresholds.escalateMultipleIssues" /> Mark as critical when an API has 2 or more problems at once</label>
+          </div>
+
+          <!-- Recipients -->
+          <div class="panel">
+            <div class="panel-head"><h2>Email recipients</h2>
+              <span class="pill" id="smtpPill">Checking...</span></div>
+            <label class="check big"><input type="checkbox" data-path="email.enabled" /> Send emails to the backend team</label>
+            <label class="field"><span>Recipients</span>
+              <textarea rows="4" data-path="email.recipients" data-list="1" placeholder="one email per line, or separated by commas"></textarea>
+              <small>Up to 20 addresses. All emails below go to this list.</small></label>
+            <p class="muted small" id="smtpNote"></p>
+            <div class="row"><button class="btn btn-outline" id="testEmailBtn" type="button">Send test email</button></div>
+            <div id="emailMsg" class="result" hidden></div>
+          </div>
+        </div>
+
+        <div class="grid g-half">
+          <!-- Instant -->
+          <div class="panel">
+            <div class="panel-head"><h2>Instant alerts</h2></div>
+            <p class="muted lead">An email as soon as a check finds a matching problem.</p>
+            <label class="check big"><input type="checkbox" data-path="email.instant.enabled" /> Email me when a new problem is found</label>
+            <fieldset class="group"><legend>Severity</legend>
+              <label class="check"><input type="checkbox" data-path="email.instant.severities" data-value="critical" /> Critical</label>
+              <label class="check"><input type="checkbox" data-path="email.instant.severities" data-value="warning" /> Warning</label></fieldset>
+            <fieldset class="group"><legend>Alert type</legend>
+              <label class="check"><input type="checkbox" data-path="email.instant.issueTypes" data-value="high_latency" /> Slow response</label>
+              <label class="check"><input type="checkbox" data-path="email.instant.issueTypes" data-value="failed_request" /> Failed request</label>
+              <label class="check"><input type="checkbox" data-path="email.instant.issueTypes" data-value="zero_records" /> No records</label></fieldset>
+            <label class="field narrow"><span>Do not repeat for the same API within (minutes)</span>
+              <input type="number" min="0" max="1440" data-path="email.instant.cooldownMinutes" /><small>Stops a flood of emails while an outage continues. 0 = always send.</small></label>
+          </div>
+
+          <!-- Report -->
+          <div class="panel">
+            <div class="panel-head"><h2>Status report</h2></div>
+            <p class="muted lead">A summary of all current problems, sent on a schedule.</p>
+            <label class="check big"><input type="checkbox" data-path="email.report.enabled" /> Send a status report regularly</label>
+            <label class="field narrow"><span>Send every (hours)</span>
+              <input type="number" min="1" max="168" data-path="email.report.intervalHours" /></label>
+            <fieldset class="group"><legend>Include severity</legend>
+              <label class="check"><input type="checkbox" data-path="email.report.severities" data-value="critical" /> Critical</label>
+              <label class="check"><input type="checkbox" data-path="email.report.severities" data-value="warning" /> Warning</label></fieldset>
+            <fieldset class="group"><legend>Include alert type</legend>
+              <label class="check"><input type="checkbox" data-path="email.report.issueTypes" data-value="high_latency" /> Slow response</label>
+              <label class="check"><input type="checkbox" data-path="email.report.issueTypes" data-value="failed_request" /> Failed request</label>
+              <label class="check"><input type="checkbox" data-path="email.report.issueTypes" data-value="zero_records" /> No records</label></fieldset>
+            <label class="check"><input type="checkbox" data-path="email.report.skipWhenHealthy" /> Skip the report when there are no active alerts</label>
+            <p class="schedule" id="scheduleInfo"></p>
+            <div class="row"><button class="btn btn-outline" id="sendReportBtn" type="button">Send report now</button></div>
+            <div id="reportMsg" class="result" hidden></div>
+          </div>
+        </div>
+
+        <div class="panel flush">
+          <div class="panel-head pad"><h2>Email history</h2><span class="muted">Last 15 emails</span></div>
+          <div class="table-wrap"><table class="tbl static" id="emailLog"></table></div>
+        </div>
+
+        <div class="savebar" id="savebar">
+          <span id="dirtyMsg">All changes saved</span>
+          <button class="btn btn-outline" id="discardBtn" type="button">Discard</button>
+          <button class="btn btn-primary" id="saveBtn" type="button">Save settings</button>
+        </div>
+      </section>
+
       <!-- ===== Run check ===== -->
       <section class="view" id="view-check" hidden>
         <div class="panel">
@@ -109,15 +244,19 @@
           <div id="result" class="result" role="status" hidden></div>
         </div>
         <div class="panel">
-          <div class="panel-head"><h2>Detection rules</h2></div>
-          <ul class="rules">
-            <li><span class="tag">Slow response</span> Response time above 2000 ms (critical above 4000 ms)</li>
-            <li><span class="tag">Failed request</span> HTTP status 400 or higher (critical for 500+)</li>
-            <li><span class="tag">No records</span> Fewer than 1 record returned</li>
-          </ul>
+          <div class="panel-head"><h2>Detection rules</h2><a class="link" href="#settings">Change in Settings</a></div>
+          <ul class="rules" id="rulesList"></ul>
         </div>
       </section>
     </main>
+    <footer class="page-foot">
+      <span>&copy; 2026 Cottage Home Care. All Rights Reserved. Internal use only.</span>
+      <span>
+        <a href="https://cottagehomecare.com/privacy-and-policy/" target="_blank" rel="noopener">Privacy Policy</a> |
+        <a href="https://cottagehomecare.com/terms-and-conditions/" target="_blank" rel="noopener">Terms &amp; Conditions</a> |
+        <a href="https://cottagehomecare.com/" target="_blank" rel="noopener">Main Website</a>
+      </span>
+    </footer>
   </div>
 
   <!-- ========== Detail drawer ========== -->
@@ -133,6 +272,8 @@
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="js/api.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/settings.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

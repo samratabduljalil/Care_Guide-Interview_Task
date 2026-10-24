@@ -1,0 +1,35 @@
+/* ==========================================================
+   Cottage Home Care theme  (the ONLY file to edit for branding)
+
+   HOW TO MATCH cottagehomecare.com EXACTLY:
+   1. Open https://cottagehomecare.com in Chrome
+   2. Right-click the orange/colored button "Free Consultation" > Inspect
+   3. In the Styles panel, copy its background-color  -> --accent
+   4. Do the same for the header/footer background     -> --brand-dark
+   5. Inspect a heading to read its font-family        -> --font-head
+   Replace the values below. Everything else updates automatically.
+   ========================================================== */
+:root {
+  --brand:       #1f6f6b;
+  --brand-dark:  #154c49;
+  --brand-deep:  #0f3b38;
+  --brand-tint:  #e8f3f1;
+  --accent:      #e8923a;
+  --accent-dark: #c97620;
+  --bg:          #f4f7f6;
+  --white:       #ffffff;
+  --ink:         #1c2b2a;
+  --muted:       #5e6f6d;
+  --line:        #dfe7e5;
+  --crit:        #b3261e;
+  --crit-bg:     #fdecea;
+  --warn:        #8a5a00;
+  --warn-bg:     #fff3d6;
+  --ok:          #1f7a4d;
+  --ok-bg:       #e3f4ea;
+  --font-head: "Lora", Georgia, serif;
+  --font-body: "Nunito Sans", "Segoe UI", system-ui, sans-serif;
+  --radius: 16px;
+  --shadow: 0 1px 2px rgba(15,59,56,.05), 0 6px 20px rgba(15,59,56,.06);
+  --side-w: 244px;
+}

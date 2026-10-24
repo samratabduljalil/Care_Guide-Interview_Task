@@ -31,12 +31,17 @@ or use the "Send test data" panel in the UI, or Postman: `POST http://localhost:
 | POST | /monitor | Batch-analyse API results, store anomalies |
 | GET | /alerts | Alerts, newest first (`?status=active|resolved|all&severity=critical&api_name=X`, max 500) |
 | PATCH | /alerts/:id/resolve | Mark an alert resolved |
+| GET / PUT | /settings | Read / save thresholds and email settings |
+| POST | /settings/test-email | Send a test email to the recipients |
+| POST | /settings/send-report | Send the status report now |
+| GET | /settings/email-log | Last 15 emails and their result |
 
 ## Detection rules
-- `high_latency`: response_time_ms > 2000 (critical above 4000)
-- `failed_request`: status_code >= 400 (critical for 5xx)
-- `zero_records`: records_returned < 1
-- Critical if 5xx, very slow, or 2+ issues together.
+Thresholds are edited from the dashboard (Settings page) and saved in PostgreSQL. Defaults:
+- `high_latency`: response time above 2000 ms (critical above 4000 ms)
+- `failed_request`: HTTP status 400 or higher (critical from 500)
+- `zero_records`: fewer than 1 record
+- Critical also when an API has 2+ problems at once (can be switched off)
 
 ## Design notes
 - Routes -> controllers -> services -> model (modular).
@@ -44,7 +49,6 @@ or use the "Send test data" panel in the UI, or Postman: `POST http://localhost:
 - LLM calls run in parallel (`Promise.all`); on failure a template message is used.
 - One invalid item in a batch is skipped and reported, not fatal.
 - Logs: `backend/logs/`.
-- Optional email: set `EMAIL_ENABLED=true` and SMTP values in `.env`.
 
 ## Run from the project root (Express serves backend + UI)
 ```bash
@@ -59,3 +63,13 @@ npm start
 - **Run Check:** paste or load JSON and submit to `/monitor`
 - Brand colors and fonts: edit the `:root` block at the top of `frontend/css/style.css`
 - Logo loads from the Cottage image server; save a local copy in `frontend/` for offline use
+
+## Email alerts and reports
+1. Put the mail account in `backend/.env` (`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, optional `SMTP_FROM`). Gmail needs an app password.
+2. Open the dashboard, go to **Settings** and choose:
+   - **Recipients** and an on/off switch for all email
+   - **Instant alerts:** which severities and alert types trigger an email, and a cooldown so one outage does not send a flood
+   - **Status report:** how often (hours), which severities and alert types to include, and whether to skip it when everything is healthy
+3. Use **Send test email** and **Send report now** to check it works. Every email is recorded in **Email history**.
+
+Notes: secrets stay in `.env`, everything else is stored in PostgreSQL (tables `settings`, `email_log`). The report scheduler runs inside the server, so run a single server instance. The instant-alert cooldown is kept in memory and resets when the server restarts.
