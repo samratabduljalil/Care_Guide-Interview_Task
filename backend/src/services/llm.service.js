@@ -9,7 +9,7 @@ const SYSTEM_PROMPT =
   'Do not use markdown or emojis.';
 
 const MAX_ATTEMPTS = 3;          // 1 try + 2 retries
-const TIMEOUT_MS = 12000;        // per attempt
+const TIMEOUT_MS = 50000;        // per attempt
 const RETRY_STATUS = [429, 500, 502, 503, 504]; // temporary Gemini problems
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

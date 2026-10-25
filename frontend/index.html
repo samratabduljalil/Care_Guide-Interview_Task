@@ -75,12 +75,12 @@
           <div class="panel">
             <div class="panel-head">
               <h2>Alerts over time</h2>
-              <div class="legend"><span><i style="background:var(--crit)"></i>Critical</span><span><i style="background:var(--accent)"></i>Warning</span></div>
+              <div class="legend"><span><i style="background:var(--crit)"></i>Critical</span><span><i style="background:var(--accent)"></i>Warning</span><span><i class="ln"></i>Resolved</span></div>
             </div>
             <div class="chart" id="chartTimeline"></div>
           </div>
           <div class="panel">
-            <div class="panel-head"><h2>Active by severity</h2></div>
+            <div class="panel-head"><h2>Alert status</h2></div>
             <div class="donut-wrap">
               <div class="chart donut" id="chartDonut"></div>
               <ul class="legend-list" id="donutLegend"></ul>
@@ -91,10 +91,12 @@
         <div class="grid g-half">
           <div class="panel">
             <div class="panel-head"><h2>Issue types</h2><span class="muted" id="rangeLabel1"></span></div>
+            <div class="legend sub"><span><i style="background:var(--ok)"></i>resolved</span></div>
             <div id="chartIssues"></div>
           </div>
           <div class="panel">
             <div class="panel-head"><h2>Most affected APIs</h2><span class="muted" id="rangeLabel2"></span></div>
+            <div class="legend sub"><span><i style="background:var(--crit)"></i>Critical</span><span><i style="background:var(--accent)"></i>Warning</span><span><i style="background:var(--ok)"></i>Resolved</span></div>
             <div id="chartApis"></div>
           </div>
         </div>

@@ -75,16 +75,18 @@ function renderOverview() {
   const crit = act.filter((a) => a.severity === 'critical').length;
   const warn = act.length - crit;
   const apis = new Set(act.map((a) => a.api_name)).size;
-  const today = new Date().toDateString();
-  const resolvedToday = state.alerts.filter((a) => a.status === 'resolved' && a.resolved_at && new Date(a.resolved_at).toDateString() === today).length;
+  const rangeMs = state.range === '24h' ? 24 * 3600e3 : 7 * 86400e3;
   const label = state.range === '24h' ? 'last 24 hours' : 'last 7 days';
   const ranged = state.alerts.filter(inRange);
   const series = charts.fill(state.range, ranged);
   const C = charts.C;
-  // real resolved-per-bucket counts, based on when each alert was resolved
+
+  // resolved alerts, counted by WHEN they were resolved, for the selected range
+  const resolvedAll = state.alerts.filter((a) => a.status === 'resolved' && a.resolved_at);
+  const resolvedInRange = resolvedAll.filter((a) => Date.now() - new Date(a.resolved_at) <= rangeMs);
   const resolvedSeries = charts.fill(state.range,
-    state.alerts.filter((a) => a.status === 'resolved' && a.resolved_at).map((a) => ({ created_at: a.resolved_at, severity: 'warning' }))
-  ).map((d) => d.warning);
+    resolvedAll.map((a) => ({ created_at: a.resolved_at, severity: 'warning' }))).map((d) => d.warning);
+  series.forEach((d, i) => { d.resolved = resolvedSeries[i]; });
 
   $('ovSub').textContent = act.length
     ? `${act.length} active alert${act.length > 1 ? 's' : ''} across ${apis} API${apis > 1 ? 's' : ''}`
@@ -97,32 +99,45 @@ function renderOverview() {
     kpi('', act.length, 'Active alerts', `${ranged.length} new in ${label}`, series.map((d) => d.critical + d.warning), C.brand) +
     kpi('crit', crit, 'Critical', `${warn} warning`, series.map((d) => d.critical), C.crit) +
     kpi('warn', apis, 'APIs affected', apis ? 'need a look' : 'all healthy', series.map((d) => d.critical + d.warning), C.warn) +
-    kpi('ok', resolvedToday, 'Resolved today', `${state.alerts.filter((a) => a.status === 'resolved').length} resolved in total`,
-      resolvedSeries, C.ok);
+    kpi('ok', resolvedInRange.length, `Resolved (${state.range === '24h' ? '24 hours' : '7 days'})`,
+      `${resolvedAll.length} resolved in total`, resolvedSeries, C.ok);
 
   /* Charts */
   $('chartTimeline').innerHTML = charts.timeline(series);
+  const shown = crit + warn + resolvedInRange.length;
   $('chartDonut').innerHTML = charts.donut(
-    [{ label: 'Critical', value: crit, color: C.crit }, { label: 'Warning', value: warn, color: C.warn }], String(act.length), 'active');
+    [{ label: 'Active critical', value: crit, color: C.crit }, { label: 'Active warning', value: warn, color: C.warn },
+     { label: `Resolved (${label})`, value: resolvedInRange.length, color: C.ok }], String(shown), 'alerts');
   $('donutLegend').innerHTML =
-    `<li><i style="background:${C.crit}"></i>Critical <b>${crit}</b></li><li><i style="background:${C.warn}"></i>Warning <b>${warn}</b></li>` +
-    `<li><i style="background:${C.ok}"></i>Resolved <b>${state.alerts.length - act.length}</b></li>`;
+    `<li><i style="background:${C.crit}"></i>Active critical <b>${crit}</b></li>` +
+    `<li><i style="background:${C.warn}"></i>Active warning <b>${warn}</b></li>` +
+    `<li><i style="background:${C.ok}"></i>Resolved (${state.range === '24h' ? '24 h' : '7 days'}) <b>${resolvedInRange.length}</b></li>`;
 
   $('rangeLabel1').textContent = $('rangeLabel2').textContent = label;
 
-  const issueCount = { high_latency: 0, failed_request: 0, zero_records: 0 };
-  ranged.forEach((a) => a.issues.forEach((i) => { issueCount[i] = (issueCount[i] || 0) + 1; }));
+  // issue types: coloured part = still active, green part = resolved
+  const issueCount = {};
+  ranged.forEach((a) => a.issues.forEach((i) => {
+    const o = (issueCount[i] ||= { active: 0, resolved: 0 });
+    o[a.status === 'resolved' ? 'resolved' : 'active']++;
+  }));
   const issueColors = { high_latency: C.warn, failed_request: C.crit, zero_records: C.brand };
   $('chartIssues').innerHTML = charts.hbars(
-    Object.entries(issueCount).sort((x, y) => y[1] - x[1]).filter(([, v]) => v > 0)
-      .map(([k, v]) => ({ label: LABELS[k] || k, total: v, segs: [{ value: v, color: issueColors[k] || C.brand, name: 'alerts' }] })),
+    Object.entries(issueCount).map(([k, o]) => ({ label: LABELS[k] || k, total: o.active + o.resolved,
+      segs: [{ value: o.active, color: issueColors[k] || C.brand, name: 'active' }, { value: o.resolved, color: C.ok, name: 'resolved' }] }))
+      .sort((x, y) => y.total - x.total),
     `No alerts in the ${label}.`);
 
+  // APIs: red/orange = still active, green = resolved
   const perApi = {};
-  ranged.forEach((a) => { const o = (perApi[a.api_name] ||= { critical: 0, warning: 0 }); o[a.severity]++; });
+  ranged.forEach((a) => {
+    const o = (perApi[a.api_name] ||= { critical: 0, warning: 0, resolved: 0 });
+    o[a.status === 'resolved' ? 'resolved' : a.severity]++;
+  });
   $('chartApis').innerHTML = charts.hbars(
-    Object.entries(perApi).map(([name, o]) => ({ label: name, total: o.critical + o.warning,
-      segs: [{ value: o.critical, color: C.crit, name: 'critical' }, { value: o.warning, color: C.warn, name: 'warning' }] }))
+    Object.entries(perApi).map(([name, o]) => ({ label: name, total: o.critical + o.warning + o.resolved,
+      segs: [{ value: o.critical, color: C.crit, name: 'active critical' }, { value: o.warning, color: C.warn, name: 'active warning' },
+             { value: o.resolved, color: C.ok, name: 'resolved' }] }))
       .sort((x, y) => y.total - x.total).slice(0, 6),
     `No alerts in the ${label}.`);
 

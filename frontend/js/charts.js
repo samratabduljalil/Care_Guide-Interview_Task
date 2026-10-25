@@ -43,7 +43,7 @@ const charts = (() => {
   function timeline(data) {
     const W = 680, H = 285, L = 34, R = 8, T = 10, B = 28;
     const iw = W - L - R, ih = H - T - B;
-    const max = niceMax(Math.max(0, ...data.map((d) => d.critical + d.warning)));
+    const max = niceMax(Math.max(0, ...data.map((d) => Math.max(d.critical + d.warning, d.resolved || 0))));
     const y = (v) => T + ih - (v / max) * ih;
     const bw = iw / data.length, bar = Math.min(26, bw * 0.62);
     const step = data.length > 12 ? 3 : 1;
@@ -56,7 +56,7 @@ const charts = (() => {
     const bars = data.map((d, i) => {
       const x = L + i * bw + (bw - bar) / 2;
       const hw = d.warning / max * ih, hc = d.critical / max * ih;
-      const tip = `${d.title}|Critical: ${d.critical}|Warning: ${d.warning}`;
+      const tip = `${d.title}|Detected critical: ${d.critical}|Detected warning: ${d.warning}|Resolved: ${d.resolved || 0}`;
       return `<g class="bar" style="--i:${i}">
         ${d.warning ? `<rect x="${x}" y="${T + ih - hw}" width="${bar}" height="${hw}" fill="${C.warn}" rx="3"/>` : ''}
         ${d.critical ? `<rect x="${x}" y="${T + ih - hw - hc}" width="${bar}" height="${hc}" fill="${C.crit}" rx="3"/>` : ''}
@@ -64,7 +64,13 @@ const charts = (() => {
       </g>
       ${i % step === 0 ? `<text x="${L + i * bw + bw / 2}" y="${H - 8}" text-anchor="middle" class="ax">${esc(d.label)}</text>` : ''}`;
     }).join('');
-    return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Alerts over time, stacked by severity">${g}${bars}</svg>`;
+    // green line = alerts resolved in each period (by the time they were resolved)
+    const pts = data.map((d, i) => [L + i * bw + bw / 2, y(d.resolved || 0)]);
+    const line = data.some((d) => d.resolved)
+      ? `<g class="res-line" pointer-events="none"><polyline points="${pts.map((p) => p.join(',')).join(' ')}" fill="none" stroke="${C.ok}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>` +
+        pts.map((p, i) => (data[i].resolved ? `<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="${C.ok}" stroke="#fff" stroke-width="1.5"/>` : '')).join('') + '</g>'
+      : '';
+    return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Alerts detected by severity, and alerts resolved, over time">${g}${bars}${line}</svg>`;
   }
 
   /* Donut chart: [{label, value, color}] */
